@@ -1,34 +1,73 @@
-import express from "express"
-import morgan from "morgan"
-import { createPod } from "./kubernetes/pod.js"; 
-import { createService} from "./kubernetes/service.js";
-import {v7 as uuid} from "uuid"
+import express from 'express'
+import morgan from 'morgan'
+import { createPod } from "./kubernetes/pod.js";
+import { createService } from "./kubernetes/service.js";
+import { v7 as uuid } from 'uuid';
 
 const app = express();
 
-app.use(morgan('dev'))
-app.use(express.json())
-app.use(express.urlencoded({extended: true}))
+app.use(morgan('dev'));
+app.use(morgan('combined'))
 
-app.get('/api/sandbox/health',(req,res)=>{
-   res.status(200).json({
-    message: "Sandbox API is health",
-    status: 'ok'
-   })  
+app.get('/api/status/healthz',(req,res)=>{
+    res.status(200).json({
+        status:'ok'
+    })
 })
 
-app.post("/api/sandbox/start",async (req,res)=>{
-    const sandboxId = uuid()
-    await Promise.all([
-        createPod(sandboxId),
-        createService(sandboxId)
-    ])
+app.get('/api/status/readyz',(req,res)=>{
+    res.status(200).json({
+        status:'ready'
+    })
+})
 
-    return res.status(200).json({
-        message:"Sandbox environment created successfully",
-        sandboxId,
-        previewUrl: `http://${sandboxId}.preview.localhost`
-        })
+function getProxy(sandboxId){
+    const target= `http://sandbox-service-${sandboxId}`
+    if(!proxies[sandboxId]){
+        proxies[sandboxId]= createProxyMiddleware({
+        target,
+        changeOrigin:true,
+        ws:true,
+       proxyTimeout: 10000,  // ← 10 sec wait
+  timeout: 10000,
+  on: {
+    error: (err, req, res) => {
+      // Retry instead of showing error
+      setTimeout(() => {
+        res.writeHead(302, { Location: req.url })
+        res.end()
+      }, 2000)
+    }
+  }
+    })
+    }
+
+    return proxies[sandboxId]
+}
+
+function getAgentProxy(sandboxId){
+    const target= `http://sandbox-service-${sandboxId}:3000`
+    if(!agentProxies[sandboxId]){
+        agentProxies[sandboxId]= createProxyMiddleware({
+        target,
+        changeOrigin:true,
+        ws:true,
+    })
+    }
+
+    return agentProxies[sandboxId]
+}
+
+app.use((req,res,next)=>{
+    const host = req.headers.host;
+    const sandboxId = host.split('.')[0];
+
+    if (host.split('.')[1] === 'agent') {
+      return getAgentProxy(sandboxId)(req, res, next);
+    }else if (host.split('.')[1] === 'preview'){
+      return getProxy(sandboxId)(req,res,next);
+    }
+
 })
 
 export default app;

@@ -1,0 +1,9 @@
+# ws-headers.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ws-configure 
+  namespace: default
+data:
+  Upgrade: "$http_upgrade"
+  Connection: "Upgrade"

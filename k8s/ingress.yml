@@ -3,15 +3,26 @@ kind: Ingress
 metadata:
   name: nexus-ingress
   annotations:
+     # Time in seconds to wait for a response from the pod
     nginx.ingress.kubernetes.io/proxy-read-timeout: "6000"
+    # Time in seconds to wait for data to be sent to the pod
     nginx.ingress.kubernetes.io/proxy-send-timeout: "6000"
+    # Time in seconds to establish a connection to the pod
     nginx.ingress.kubernetes.io/proxy-connect-timeout: "6000"
+    
+    nginx.ingress.kubernetes.io/affinity: "cookie"
+    nginx.ingress.kubernetes.io/session-cookie-name: "route"
+    nginx.ingress.kubernetes.io/session-cookie-path: "/"
+
+    nginx.ingress.kubernetes.io/proxy-http-version: "1.1"
+    nginx.ingress.kubernetes.io/proxy-set-headers: "default/ws-configure"
+    
   labels:
     app.kubernetes.io/name: nexus-ingress
 spec:
   ingressClassName: nginx
   rules:
-   - http:
+  - http:
       paths:
       - pathType: Prefix
         path: "/api/sandbox"
@@ -20,9 +31,7 @@ spec:
             name: sandbox-service
             port: 
               number: 80
-
-
-   - http:
+  - http:
       paths:
       - pathType: Prefix
         path: "/api/ai"
@@ -30,10 +39,20 @@ spec:
           service:
             name: ai-service
             port: 
-              number: 80          
+              number: 80  
 
-   - host: "*.preview.localhost"
-     http:
+  # - http:
+  #     paths:
+  #     - path: "/api/auth"
+  #       pathType: Prefix
+  #       backend:
+  #         service:
+  #           name: auth-service
+  #           port:
+  #             number: 80
+
+  - host: "*.preview.localhost"
+    http:
        paths:
        - pathType: Prefix
          path: "/"
@@ -43,7 +62,7 @@ spec:
              port: 
                number: 80
 
-   - host: "*.agent.localhost"
+  -  host: "*.agent.localhost"
      http:
        paths:
        - pathType: Prefix
@@ -52,5 +71,13 @@ spec:
             service:
               name: router-service
               port: 
-                number: 80
-             
+                number: 80   
+
+
+
+
+
+  
+
+
+    
