@@ -47,3 +47,4 @@ manifests:
      - k8s/rbac.yml
      - k8s/rbac-role.yml
      - k8s/rbac-binding.yml
+     - k8s/ws-configure.yml

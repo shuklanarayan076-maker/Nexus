@@ -33,7 +33,7 @@ app.get('/', (req, res) => {
   })
 });
 
-app.get('/api/sandbox/healthz', (req,res) => res.status(200).json({ status: 'ok' }));
+
 
 const shell = process.env.SHELL || 'bash';
 
