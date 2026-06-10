@@ -28,15 +28,15 @@ spec:
             memory: "200Mi"
         livenessProbe:
           httpGet:
-            path: /api/sandbox/healthz
+            path: /api/sandbox/health
             port: 3000
           initialDelaySeconds: 90
           timeoutSeconds: 10
         readinessProbe:
           httpGet:
-            path: /api/sandbox/healthz
+            path: /api/sandbox/health
             port: 3000
-          initialDelaySeconds: 30
+          initialDelaySeconds: 60
           timeoutSeconds: 10     
         ports:
         - containerPort:  3000

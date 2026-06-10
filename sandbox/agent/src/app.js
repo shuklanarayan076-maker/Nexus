@@ -33,6 +33,11 @@ app.get('/', (req, res) => {
   })
 });
 
+// Health check used by Kubernetes readiness/liveness probes
+app.get('/api/sandbox/health', (req, res) => {
+  res.status(200).json({ status: 'ok' });
+});
+
 
 
 const shell = process.env.SHELL || 'bash';
